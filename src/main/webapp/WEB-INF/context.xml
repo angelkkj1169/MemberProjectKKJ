@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+
+	<!--
+	 AOP 어너테이션을 사용하기 전에 세팅해야 할 코드(CG-LIB)
+	 이를 이용하면 인터페이스로 구현한 클래스도 aop 사용이 가능하다. 
+	 단점은 final을 사용 못한다는 건데 그건 매우 드문경우니 거의 단점이 없다고 생각하자 -->
+	<aop:aspectj-autoproxy proxy-target-class="true"></aop:aspectj-autoproxy>
+
+
+	<!--이미지 경로를 적어주기 전에 먼저 해야할 작업임 -->
+	<mvc:resources location="/resources/"
+		mapping="/resources/**"></mvc:resources>
+	<mvc:annotation-driven></mvc:annotation-driven>
+
+
+	<!--어너테이션(@Autowired)을 쓰기 전에 해야할 필수 작업 -->
+	<context:component-scan base-package="kh.spring"></context:component-scan>
+
+	<!--ViewResolver 생성 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+
+		<!--url 링크의 시작과 끝을 입력해준다. Spring 실행시 ViewResolver bean이 존재할 경우 특별히 아무것도 
+			하지 않아도 자동으로 아래의 기능을 수행해 준다. 아래와 같이 세팅해줄 경우 실제론 /WEB-INF/views/[return값으로 
+			들어갈 String값].jsp로 값이 전달됨 -->
+		<property name="prefix" value="WEB-INF/views/"></property>
+		<property name="suffix" value=".jsp"></property>
+
+	</bean>
+
+
+	<!-- DBCP -->
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp.BasicDataSource">
+
+		<property name="driverClassName"
+			value="oracle.jdbc.driver.OracleDriver"></property>
+		<property name="url"
+			value="jdbc:oracle:thin:@localhost:1521:xe"></property>
+		<property name="username" value="kh"></property>
+		<property name="password" value="kh"></property>
+
+		<!-- 오토커밋을 하지 않도록 함 <property name="defaultAutoCommit" value="false"></property> -->
+	</bean>
+
+
+	<!-- JdbcTemplate bean을 생성시킴(그리고 위의 dbcp(dataSource)를 의존성 주입시킨다.) -->
+	<bean id="jdbcTemplate"
+		class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+<!-- MyBatis의 SqlSessionFactoryBean를 생성(커넥션 객체를 찍어줌)
+(MyBatis를 사용하기 전에 마켓플레이스에서 mybatipse 설치 권장) -->
+<bean id="SessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+<property name="dataSource" ref="dataSource"></property>
+
+<!-- 여기엔 쿼리문을 작성할 별개의 xml url을 적어줘야 함 
+classpath는 src/main/resources와 같다. 
+*-mapper.xml: mapper.xml이 달려있는 모든 xml을 읽어들이겠다는 뜻
+*mapper의 갯수는 일반적으로 테이블의 갯수와 같다고 생각하면 된다. -->
+<property name="mapperLocations" value="classpath:/mybatis/*-mapper.xml"></property> 
+</bean>
+
+<!--MyBatis -->
+<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+<constructor-arg name="sqlSessionFactory" ref="SessionFactory"></constructor-arg>
+</bean>
+
+
+	<!--파일 업로드관련 MultipartResolver 생성 및 설정해주기 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="10000000"></property>
+	</bean>
+
+
+	<!--트랜잭션을 관리해주는 bean을 생성(Service에 사용) dataSource에서 일어나는 작업에 대한 원자성을 유지시키기 
+		위해 필요한 클래스 (Namespaces에서 tx에 체크를 해줘야 돌아감) -->
+	<tx:annotation-driven
+		transaction-manager="transactionManager" />
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+
+		<property name="dataSource" ref="dataSource"></property>
+
+	</bean>
+
+
+
+
+
+
+
+</beans>

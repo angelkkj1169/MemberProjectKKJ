@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MemberDAO">
+
+<!-- 
+#{}는 preparestatement, ${}는 그냥 statement를 나타낸다.  
+-->
+
+<insert id="insert">
+insert into angelmember values(#{id},#{password},#{name})
+</insert>
+
+<select id="selectAll" resultType="kh.spring.dto.MemberFileDTO">
+select * from angelmember
+</select>
+
+<select id="selectId" resultType="String">
+select * from angelmember
+</select>
+
+</mapper>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="angelboardDAO">
+
+
+
+<select id="BoardSelectAll" resultType="kh.spring.dto.AngelBoardDTO">
+    select * from angelboard
+</select>
+
+
+<insert id="BoardWriteInsert">
+  insert into angelboard values(ANGELBOARD_SEQ.NEXTVAL , #{id} ,#{title}, #{content}, default, default)
+</insert>
+
+
+<select id="BoardSelectSeq" resultType="kh.spring.dto.AngelBoardDTO">
+   select * from angelboard where seq=#{value}
+</select>
+
+
+<update id="BoardViewUpdate">
+  update angelboard set boardview=boardview+1 where seq=#{value}
+</update>
+
+
+<update id="BoardModifyUpdate">
+update angelboard set title=#{title}, content=#{content} where seq=#{seq}
+</update>
+
+
+<delete id="boardDelete">
+delete from angelboard where seq=#{value}
+</delete>
+
+
+
+<!--게시글의 총 갯수를 뽑아오는 쿼리 -->
+<select id="BoardPostNumber" resultType="Integer">
+ select count(*) as boardcount from angelboard
+</select>
+
+
+
+<!--게시글의 총 갯수(검색 결과)를 뽑아오는 쿼리
+(like를 사용할 때는 주의합시다! 해결방법이 오라클이랑 mysql이랑 다름)-->
+<select id="SelectBoardPostNumber" resultType="Integer">
+	select count(*) as boardcount
+	from angelboard
+	where id like '%'||#{keyword}||'%'
+</select>
+
+
+
+<!--  <![CDATA[<]]>
+order by X.boardwritetime -->
+<!--페이지의 어떤 번호를 클릭시 해당 페이지의 글 10개를 보여주는 함수입니다.-->
+<select id="PageBoardselect" resultType="kh.spring.dto.AngelBoardDTO">
+select X.rnum, X.seq, X.id, X.title, X.content, X.boardview, X.boardwritetime
+from( 
+  select rownum as rnum, A.seq, A.id, A.title, A.content, A.boardview, A.boardwritetime
+   from(
+        select *
+        from angelboard
+        order by boardwritetime desc) A
+  where rownum <![CDATA[<]]>= #{endCount}) X
+where X.rnum >= #{startCount}
+</select>
+
+
+<select id="PageKeywordSelect" resultType="kh.spring.dto.AngelBoardDTO">
+select X.rnum, X.seq, X.id, X.title, X.content, X.boardview, X.boardwritetime
+from( 
+  select rownum as rnum, A.seq, A.id, A.title, A.content, A.boardview, A.boardwritetime
+   from(
+        select *
+        from angelboard
+        where id like '%'||#{keyWord}||'%'
+        order by boardwritetime desc) A
+  where rownum <![CDATA[<]]>= #{endCount}) X
+where X.rnum >= #{startCount}
+</select>
+
+
+
+
+</mapper>
